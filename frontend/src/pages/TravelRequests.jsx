@@ -9,14 +9,13 @@ import {
 } from 'react-router-dom';
 
 import {
-  requireUser,
-} from '../services/auth.api.js';
-
-import {
   getMyTravelRequests,
 } from '../services/travel-request.api.js';
 
-import StatCard from '../components/StatCard.jsx';
+import {
+  requireUser,
+} from '../services/auth.api.js';
+
 import StatusBadge from '../components/StatusBadge.jsx';
 
 
@@ -25,26 +24,33 @@ import StatusBadge from '../components/StatusBadge.jsx';
    ========================================================= */
 
 const getEffectiveStatus = (request) => {
+
   return (
     request?.workflowStatus ||
     request?.status ||
     request?.finance?.status ||
     'Unknown'
   );
+
 };
 
+const getRequestRoute = (
+  request
+) => {
 
-const getRequestRoute = (request) => {
+  const status =
+    getEffectiveStatus(
+      request
+    );
+
 
   const travelRequestId =
     request?.travelRequestId;
 
+
   if (!travelRequestId) {
     return '/travel-requests';
   }
-
-  const status =
-    getEffectiveStatus(request);
 
 
   /*
@@ -59,8 +65,6 @@ const getRequestRoute = (request) => {
 
   /*
    * Finance returned settlement.
-   *
-   * Step 4 correction.
    */
   if (
     status === 'Returned by Finance'
@@ -70,10 +74,7 @@ const getRequestRoute = (request) => {
 
 
   /*
-   * Manager / HOD returned the
-   * Travel Request.
-   *
-   * Step 1 correction.
+   * Manager / HOD returned Travel Request.
    */
   if (
     status === 'Returned'
@@ -83,7 +84,7 @@ const getRequestRoute = (request) => {
 
 
   /*
-   * Finance / claim / payout stages.
+   * Claim / Finance / Payout stages.
    */
   if (
     status ===
@@ -109,10 +110,14 @@ const getRequestRoute = (request) => {
   return `/travel-requests/${travelRequestId}`;
 };
 
-const getActionLabel = (request) => {
+const getActionLabel = (
+  request
+) => {
 
   const status =
-    getEffectiveStatus(request);
+    getEffectiveStatus(
+      request
+    );
 
 
   if (
@@ -163,6 +168,7 @@ const getActionLabel = (request) => {
 
   return 'View Request';
 };
+
 const isPrimaryAction = (request) => {
 
   const status =
@@ -170,34 +176,50 @@ const isPrimaryAction = (request) => {
 
   return (
     status === 'Pending Settlement' ||
-    status === 'Pending Finance Verification' ||
-    status === 'Finance Verification' ||
-    status === 'Ready for Finance' ||
-    status === 'Pending Payout' ||
-    status === 'Finance Verified' ||
-    status === 'Verified' ||
-    status === 'Ready for Payout' ||
+    status === 'Returned' ||
+    status === 'Returned by Finance' ||
+    status ===
+      'Pending Finance Verification' ||
+    status ===
+      'Finance Verification' ||
+    status ===
+      'Ready for Finance' ||
+    status ===
+      'Pending Payout' ||
+    status ===
+      'Finance Verified' ||
+    status ===
+      'Verified' ||
+    status ===
+      'Ready for Payout' ||
     status === 'Paid'
   );
 };
 
 
-const formatDate = (value) => {
+const formatDate = (
+  value
+) => {
 
   if (!value) {
     return '—';
   }
 
+
   const date =
     new Date(value);
+
 
   if (
     Number.isNaN(
       date.getTime()
     )
   ) {
+
     return value;
+
   }
+
 
   return date.toLocaleDateString(
     'en-IN',
@@ -207,6 +229,7 @@ const formatDate = (value) => {
       year: 'numeric',
     }
   );
+
 };
 
 
@@ -214,10 +237,11 @@ const formatDate = (value) => {
    COMPONENT
    ========================================================= */
 
-export default function Dashboard() {
+export default function TravelRequests() {
 
   const user =
     requireUser();
+
 
   const navigate =
     useNavigate();
@@ -241,20 +265,12 @@ export default function Dashboard() {
   ] = useState('');
 
 
+  /* =========================================================
+     LOAD
+     ========================================================= */
+
   const loadRequests =
     useCallback(async () => {
-
-      if (!user?.employeeCode) {
-
-        setError(
-          'No logged-in user found.'
-        );
-
-        setLoading(false);
-
-        return;
-      }
-
 
       try {
 
@@ -273,12 +289,12 @@ export default function Dashboard() {
             ? response
             : Array.isArray(response?.data)
               ? response.data
-              : Array.isArray(response?.requests)
-                ? response.requests
-                : [];
+              : [];
 
 
-        setRows(data);
+        setRows(
+          data
+        );
 
       } catch (requestError) {
 
@@ -289,7 +305,7 @@ export default function Dashboard() {
 
 
         setError(
-          requestError?.message ||
+          requestError.message ||
           'Failed to load travel requests.'
         );
 
@@ -303,7 +319,7 @@ export default function Dashboard() {
       }
 
     }, [
-      user?.employeeCode,
+      user.employeeCode,
     ]);
 
 
@@ -316,35 +332,19 @@ export default function Dashboard() {
   ]);
 
 
-  const pending =
-    rows.filter(
-      (request) =>
-        getEffectiveStatus(request) !==
-        'Paid'
-    ).length;
-
-
-  const completed =
-    rows.filter(
-      (request) =>
-        getEffectiveStatus(request) ===
-        'Paid'
-    ).length;
-
-
-  const returned =
-    rows.filter(
-      (request) =>
-        getEffectiveStatus(request)
-          .startsWith('Returned')
-    ).length;
-
+  /* =========================================================
+     OPEN REQUEST
+     ========================================================= */
 
   const handleRequestClick =
-    (request) => {
+    (
+      request
+    ) => {
 
       navigate(
-        getRequestRoute(request)
+        getRequestRoute(
+          request
+        )
       );
 
     };
@@ -362,17 +362,16 @@ export default function Dashboard() {
         <div>
 
           <span className="eyebrow">
-            EMPLOYEE PORTAL
+            TRAVEL REQUESTS
           </span>
 
           <h2>
-            Good afternoon,{' '}
-            {user.name?.split(' ')[0]}
+            My Travel Requests
           </h2>
 
           <p>
-            Manage your travel requests
-            and reimbursement workflow.
+            Track requests from creation
+            through payout.
           </p>
 
         </div>
@@ -387,7 +386,7 @@ export default function Dashboard() {
             )
           }
         >
-          + New Travel Request
+          + New Request
         </button>
 
       </div>
@@ -400,93 +399,17 @@ export default function Dashboard() {
       {error && (
 
         <div className="alert error-alert">
-
-          <strong>
-            Unable to load requests
-          </strong>
-
-          <span>
-            {error}
-          </span>
-
+          {error}
         </div>
 
       )}
 
 
       {/* =====================================================
-          STATS
+          TABLE
       ===================================================== */}
 
-      <div className="stats-grid">
-
-        <StatCard
-          title="Total Requests"
-          value={rows.length}
-          description="All travel requests"
-          icon="▦"
-        />
-
-        <StatCard
-          title="In Progress"
-          value={pending}
-          description="Awaiting next step"
-          icon="◷"
-        />
-
-        <StatCard
-          title="Returned"
-          value={returned}
-          description="Needs correction"
-          icon="↩"
-        />
-
-        <StatCard
-          title="Paid"
-          value={completed}
-          description="Payout completed"
-          icon="✓"
-        />
-
-      </div>
-
-
-      {/* =====================================================
-          RECENT REQUESTS
-      ===================================================== */}
-
-      <div className="card dashboard-request-card">
-
-        <div className="section-heading">
-
-          <div>
-
-            <h3>
-              Recent Requests
-            </h3>
-
-            <p>
-              Track your requests through
-              the reimbursement workflow.
-            </p>
-
-          </div>
-
-
-          <button
-            type="button"
-            className="button secondary"
-            onClick={() =>
-              navigate(
-                '/travel-requests'
-              )
-            }
-          >
-            View All
-          </button>
-
-        </div>
-
+      <div className="card">
 
         {loading ? (
 
@@ -500,40 +423,9 @@ export default function Dashboard() {
 
           </div>
 
-        ) : rows.length === 0 ? (
-
-          <div className="empty-state">
-
-            <div className="empty-icon">
-              ✈
-            </div>
-
-            <h3>
-              No travel requests yet
-            </h3>
-
-            <p>
-              Create your first Travel Request
-              to start the reimbursement workflow.
-            </p>
-
-            <button
-              type="button"
-              className="button primary"
-              onClick={() =>
-                navigate(
-                  '/travel-requests/new'
-                )
-              }
-            >
-              Create Travel Request
-            </button>
-
-          </div>
-
         ) : (
 
-          <div className="dashboard-request-table">
+          <div className="table-wrapper">
 
             <table>
 
@@ -572,9 +464,8 @@ export default function Dashboard() {
 
               <tbody>
 
-                {rows
-                  .slice(0, 8)
-                  .map((request) => {
+                {rows.map(
+                  (request) => {
 
                     const status =
                       getEffectiveStatus(
@@ -743,7 +634,31 @@ export default function Dashboard() {
 
                     );
 
-                  })}
+                  }
+                )}
+
+
+                {!rows.length && (
+
+                  <tr>
+
+                    <td
+                      colSpan="6"
+                      style={{
+                        textAlign:
+                          'center',
+                        padding:
+                          '40px',
+                      }}
+                    >
+
+                      No travel requests yet.
+
+                    </td>
+
+                  </tr>
+
+                )}
 
               </tbody>
 

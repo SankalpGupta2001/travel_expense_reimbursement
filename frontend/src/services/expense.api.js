@@ -1,45 +1,138 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  'http://localhost:5000/api';
+import {
+  getApiBaseUrl,
+} from './api.js';
 
-export const processExpensePack =
-  async () => {
-    const response = await fetch(
-      `${API_BASE_URL}/expenses/process`,
+
+/*
+|--------------------------------------------------------------------------
+| Process Expenses
+|--------------------------------------------------------------------------
+*/
+
+export const processExpenses = async ({
+  travelRequestId,
+  files = [],
+}) => {
+  if (!travelRequestId) {
+    throw new Error(
+      'Travel Request ID is required.'
+    );
+  }
+
+
+  const formData =
+    new FormData();
+
+
+  formData.append(
+    'travelRequestId',
+    travelRequestId
+  );
+
+
+  /*
+   * Files are optional.
+   *
+   * If there are no files, only the
+   * Travel Request ID is sent.
+   */
+  files.forEach((file) => {
+    formData.append(
+      'documents',
+      file
+    );
+  });
+
+
+  const response =
+    await fetch(
+      `${getApiBaseUrl()}/expenses/process`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        body: formData,
       }
     );
 
-    if (!response.ok) {
-      const errorData =
-        await response
-          .json()
-          .catch(() => ({}));
 
-      throw new Error(
-        errorData.message ||
-        'Failed to process expense pack'
-      );
-    }
+  const result =
+    await response
+      .json()
+      .catch(() => ({}));
 
-    return response.json();
-  };
 
-export const getSettlementDownloadUrl =
-  (downloadUrl) => {
-    if (!downloadUrl) {
-      return null;
-    }
+  console.log(
+    'POST /expenses/process:',
+    response.status,
+    result
+  );
 
-    const backendBaseUrl =
-      API_BASE_URL.replace(
-        /\/api\/?$/,
-        ''
-      );
 
-    return `${backendBaseUrl}${downloadUrl}`;
-  };
+  if (!response.ok) {
+    throw new Error(
+      result?.message ||
+      'Failed to process expenses'
+    );
+  }
+
+
+  return result;
+};
+
+
+/*
+|--------------------------------------------------------------------------
+| Settlement Form Download URL
+|--------------------------------------------------------------------------
+*/
+
+export const getSettlementDownloadUrl = (
+  downloadUrl
+) => {
+  if (!downloadUrl) {
+    return null;
+  }
+
+
+  /*
+   * If backend already returned a complete URL,
+   * use it directly.
+   */
+  if (
+    downloadUrl.startsWith('http://') ||
+    downloadUrl.startsWith('https://')
+  ) {
+    return downloadUrl;
+  }
+
+
+  /*
+   * Example backend URL:
+   *
+   * /api/expenses/download/TRQ-2026-0001_Expense_Settlement.xlsx
+   *
+   * API base:
+   *
+   * http://localhost:5000/api
+   *
+   * We need:
+   *
+   * http://localhost:5000
+   */
+  const baseUrl =
+    getApiBaseUrl().replace(
+      /\/api\/?$/,
+      ''
+    );
+
+
+  /*
+   * Make sure there is exactly one slash.
+   */
+  const normalizedPath =
+    downloadUrl.startsWith('/')
+      ? downloadUrl
+      : `/${downloadUrl}`;
+
+
+  return `${baseUrl}${normalizedPath}`;
+};

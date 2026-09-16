@@ -337,7 +337,7 @@ const ExpenseTable = ({
                               className="table-action"
                               onClick={() =>
                                 onEdit(
-                                  type,
+                                  item,
                                   index
                                 )
                               }
