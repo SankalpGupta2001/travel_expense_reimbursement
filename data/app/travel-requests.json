@@ -1,0 +1,319 @@
+[
+  {
+    "travelRequestId": "TRQ-2026-0001",
+    "workflowStatus": "Pending Payout",
+    "status": "Pending Payout",
+    "createdAt": "2026-09-16T09:25:45.760Z",
+    "employeeDetails": {
+      "employeeName": "Chaitanya Reddy",
+      "employeeCode": "NX-4471",
+      "designation": "Manager - Key Accounts",
+      "department": "Sales",
+      "costCentre": "CE110",
+      "reportingManager": {
+        "name": "Suresh Iyer",
+        "employeeCode": "NX-2210"
+      }
+    },
+    "travelDetails": {
+      "fromDate": "2026-06-16",
+      "toDate": "2026-06-20",
+      "numberOfDays": 5,
+      "destination": "Bengaluru",
+      "company": "Vertex Technologies",
+      "purpose": "Customer meetings + site visit",
+      "travelCategory": "Domestic - Tier 1",
+      "currency": "INR",
+      "modeOfTravel": "Flight"
+    },
+    "estimatedCost": {
+      "airRail": {
+        "basis": "Estimated",
+        "amount": 10500,
+        "borneBy": "Company"
+      },
+      "lodging": {
+        "basis": "Estimated",
+        "amount": 23000,
+        "borneBy": "Company"
+      },
+      "localConveyance": {
+        "basis": "Actuals",
+        "amount": 4000,
+        "borneBy": "Employee"
+      },
+      "mealsAllowance": {
+        "basis": "As per policy",
+        "amount": 6000,
+        "borneBy": "Employee"
+      },
+      "other": {
+        "basis": "Estimated",
+        "amount": 0,
+        "borneBy": "Employee"
+      },
+      "total": 43500
+    },
+    "travelAdvance": {
+      "requested": 20000
+    },
+    "approvalWorkflow": [
+      {
+        "level": 1,
+        "role": "Reporting Manager",
+        "name": "Suresh Iyer",
+        "employeeCode": "NX-2210",
+        "required": true,
+        "status": "Approved",
+        "reason": "Required because claim value is ₹43500.00.",
+        "remarks": "",
+        "actionDate": "2026-09-16T09:26:20.521Z"
+      },
+      {
+        "level": 2,
+        "role": "Head of Department",
+        "name": "Meera Krishnan",
+        "employeeCode": "NX-1108",
+        "required": true,
+        "status": "Approved",
+        "reason": "Required because claim value is ₹43500.00.",
+        "remarks": "",
+        "actionDate": "2026-09-16T09:27:04.245Z"
+      }
+    ],
+    "settlement": {
+      "employeeDetails": {
+        "employeeName": "Chaitanya Reddy",
+        "employeeCode": "NX-4471",
+        "designation": "Manager - Key Accounts",
+        "department": "Sales",
+        "costCentre": "CE110",
+        "reportingManager": {
+          "name": "Suresh Iyer",
+          "employeeCode": "NX-2210"
+        }
+      },
+      "travelDetails": {
+        "travelRequestId": "TRQ-2026-0001",
+        "fromDate": "2026-06-16",
+        "toDate": "2026-06-20",
+        "numberOfDays": 5,
+        "destination": "Bengaluru",
+        "company": "Vertex Technologies",
+        "purpose": "Customer meetings + site visit",
+        "travelCategory": "Domestic - Tier 1",
+        "currency": "INR",
+        "modeOfTravel": "Flight"
+      },
+      "estimatedCost": {
+        "airRail": {
+          "basis": "Estimated",
+          "amount": 10500,
+          "borneBy": "Company"
+        },
+        "lodging": {
+          "basis": "Estimated",
+          "amount": 23000,
+          "borneBy": "Company"
+        },
+        "localConveyance": {
+          "basis": "Actuals",
+          "amount": 4000,
+          "borneBy": "Employee"
+        },
+        "mealsAllowance": {
+          "basis": "As per policy",
+          "amount": 6000,
+          "borneBy": "Employee"
+        },
+        "other": {
+          "amount": 0,
+          "borneBy": "Employee"
+        },
+        "total": 43500
+      },
+      "travelAdvance": {
+        "requested": 20000,
+        "drawn": 20000,
+        "reference": "ADV/2026/0619"
+      },
+      "approvalWorkflow": [
+        {
+          "level": 1,
+          "role": "Reporting Manager",
+          "name": "Suresh Iyer",
+          "employeeCode": "NX-2210",
+          "required": true,
+          "status": "Approved",
+          "reason": "Required because claim value is ₹43500.00.",
+          "remarks": "",
+          "actionDate": "2026-09-16T09:26:20.521Z"
+        },
+        {
+          "level": 2,
+          "role": "Head of Department",
+          "name": "Meera Krishnan",
+          "employeeCode": "NX-1108",
+          "required": true,
+          "status": "Approved",
+          "reason": "Required because claim value is ₹43500.00.",
+          "remarks": "",
+          "actionDate": "2026-09-16T09:27:04.245Z"
+        }
+      ],
+      "lodging": [
+        {
+          "checkIn": "2026-06-16",
+          "checkOut": "2026-06-19",
+          "nights": 3,
+          "hotelName": "Keys Prime Whitefield",
+          "city": "Bengaluru",
+          "paidBy": "Employee",
+          "amount": 19320,
+          "proofRef": "hotel_invoice_1188.png",
+          "description": "Keys Prime Hotel, Whitefield - Room and Taxes (17250 room tariff + 2070 GST)",
+          "status": "Reimbursable"
+        }
+      ],
+      "transportation": [
+        {
+          "date": "2026-06-16",
+          "time": "07:55",
+          "from": "Pune",
+          "to": "Bengaluru",
+          "mode": "Flight",
+          "paidBy": "Company",
+          "amount": 5016,
+          "proofRef": "03_advance_disbursed.eml",
+          "status": "Reimbursable"
+        },
+        {
+          "date": "2026-06-20",
+          "time": "19:15",
+          "from": "Bengaluru",
+          "to": "Pune",
+          "mode": "Flight",
+          "paidBy": "Company",
+          "amount": 5540,
+          "proofRef": "03_advance_disbursed.eml",
+          "status": "Reimbursable"
+        },
+        {
+          "date": "2026-06-16",
+          "time": "05:20 AM",
+          "from": "Baner, Pune",
+          "to": "Pune International Airport (PNQ)",
+          "mode": "Uber",
+          "paidBy": "Employee",
+          "amount": 1415.02,
+          "proofRef": "15_return_cab.eml",
+          "status": "Reimbursable"
+        },
+        {
+          "date": "2026-06-16",
+          "time": "09:52 AM",
+          "from": "Kempegowda International Airport (BLR)",
+          "to": "Keys Prime Hotel, Whitefield",
+          "mode": "Uber",
+          "paidBy": "Employee",
+          "amount": 743,
+          "proofRef": "08_uber_payment_failed.eml",
+          "status": "Reimbursable"
+        },
+        {
+          "date": "2026-06-17",
+          "time": "07:35 PM",
+          "from": "Vertex Technologies, Whitefield",
+          "to": "Keys Prime Hotel, Whitefield",
+          "mode": "Uber",
+          "paidBy": "Employee",
+          "amount": 172,
+          "proofRef": "10_uber_receipt_3_resend.eml",
+          "status": "Reimbursable"
+        },
+        {
+          "date": "2026-06-20",
+          "time": "09:05 PM",
+          "from": "Pune International Airport (PNQ)",
+          "to": "Baner, Pune",
+          "mode": "Uber",
+          "paidBy": "Employee",
+          "amount": 1229.02,
+          "proofRef": "14_promo_noise.eml",
+          "status": "Reimbursable"
+        }
+      ],
+      "otherExpenses": [
+        {
+          "date": "2026-06-18",
+          "head": "Business Entertainment",
+          "description": "Dinner with Vertex procurement team, 4 people",
+          "paidBy": "Employee",
+          "amount": 2255,
+          "proofRef": "dinner_bill_18jun.png",
+          "status": "Reimbursable"
+        },
+        {
+          "date": "2026-06-17",
+          "head": "Laundry",
+          "description": "Laundry service at Keys Prime Whitefield",
+          "paidBy": "Employee",
+          "amount": 450,
+          "proofRef": "hotel_invoice_1188.png",
+          "status": "Non-reimbursable"
+        },
+        {
+          "date": "2026-06-17",
+          "head": "Mini Bar",
+          "description": "Mini bar consumption at Keys Prime Whitefield",
+          "paidBy": "Employee",
+          "amount": 380,
+          "proofRef": "hotel_invoice_1188.png",
+          "status": "Non-reimbursable"
+        },
+        {
+          "date": "2026-06-17",
+          "head": "Meals",
+          "description": "In-room dining at Keys Prime Whitefield",
+          "paidBy": "Employee",
+          "amount": 1120,
+          "proofRef": "hotel_invoice_1188.png",
+          "status": "Reimbursable"
+        }
+      ],
+      "settlementSummary": {
+        "totalClaimPaidByEmployee": 27184.04,
+        "totalPaidByCompany": 10556,
+        "nonReimbursable": 830,
+        "netReimbursableClaim": 26354.04,
+        "travelAdvance": 20000,
+        "amountPayableToEmployee": 6354.04,
+        "amountRecoverableFromEmployee": 0
+      },
+      "finalData": {
+        "finalAmountPayable": 6354.04,
+        "finalAmountRecoverable": 0
+      }
+    },
+    "finance": {
+      "status": "Verified",
+      "remarks": "",
+      "verifiedBy": "NX-3305",
+      "verifiedAt": "2026-09-16T09:30:59.141Z"
+    },
+    "payout": {
+      "status": "Pending Payout",
+      "amount": 6354.04,
+      "recoverable": 0,
+      "reference": "",
+      "paidAt": null,
+      "releasedBy": ""
+    },
+    "returnRemarks": "",
+    "updatedAt": "2026-09-16T09:30:59.141Z",
+    "settlementForm": {
+      "fileName": "TRQ-2026-0001_Expense_Settlement.xlsx",
+      "downloadUrl": "/api/expenses/download/TRQ-2026-0001_Expense_Settlement.xlsx"
+    }
+  }
+]

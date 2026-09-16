@@ -5,7 +5,7 @@ The main goal is to automate the travel expense settlement process. The applicat
 I also understood that not every expense should be reimbursed. For example, company-paid flights should only be recorded for reference, while expenses such as laundry and minibar should be marked as non-reimbursable. Some cases, such as business entertainment without the required approval or unclear document information, should be sent for human review.
 
 # Assumptions
-1) In data folder all documents are there. In production we can fetch all emails and receipt by apis.
+1) In data/expensepack folder all documents are there. In production we can fetch all emails and receipt by gmails apis.
 2) Duplicate transactions should be counted only once.
 3) Expenses belonging to another employee should not be included in the claim.
 4) Company-paid expenses are not added to the employee reimbursement.
@@ -15,17 +15,81 @@ I also understood that not every expense should be reimbursed. For example, comp
 
 # What I built
 
-I built the application using Node.js, Express.js, React, and Gemini AI. The backend extracts data from emails, receipts and the Travel Request, sends the information to Gemini, and gets the result in a fixed JSON structure. The application then shows the employee details, travel details, expenses, approval workflow and settlement amount. I also added the policy checks for lodging, meals, business entertainment, non-reimbursable expenses, duplicate expenses, employee/company-paid expenses and travel advance. Finally, the application generates the Expense Settlement Form using the provided Excel template.
+
+I built the application using **Node.js, Express.js, React, and Gemini AI** to automate the travel expense reimbursement and settlement workflow.
+
+1. Document Processing
+* Processed the provided **Travel Request, emails, and receipt documents** from the data folder.
+* Extracted relevant information such as employee details, travel dates, destinations, expense amounts, payment methods, and supporting documents.
+* Used Gemini AI to understand unstructured email and receipt content.
+
+2. Structured Expense Extraction
+* Converted the extracted information into a **fixed JSON structure** so that the backend can process expenses consistently.
+* Identified different expense categories such as:
+  * Lodging
+  * Transportation
+  * Meals
+  * Business Entertainment
+  * Non-reimbursable expenses
+* Linked expenses with the appropriate employee and Travel Request.
+
+3. Expense Validation
+* Checked whether an expense was **employee-paid or company-paid**.
+* Detected duplicate transactions so the same expense is not reimbursed twice.
+* Prevented expenses belonging to another employee from being included in the claim.
+* Used the supporting receipt/email information to validate the expense.
+
+4. Travel Policy Application
+* Applied the provided company travel policy to different expense categories.
+* Validated **lodging limits and eligible hotel charges**.
+* Applied **meal limits** based on the applicable policy.
+* Checked **business entertainment requirements**, including approval and supporting information.
+* Identified expenses such as **laundry and minibar** as non-reimbursable.
+* Handled cases where the available information is insufficient and requires further review.
+
+5. Settlement Calculation
+* Calculated the total employee-paid expenses.
+* Separated company-paid expenses from the employee claim.
+* Calculated the total non-reimbursable amount.
+* Calculated the final **net reimbursable claim**.
+* Deducted the **travel advance** from the eligible claim.
+* Determined the final amount **payable to the employee or recoverable from the employee**.
+
+6. Approval Workflow
+* Displayed the reporting manager and Head of Department approval information.
+* Determined when additional approval or verification is required based on the claim and applicable policy.
+* Displayed the current settlement status as part of the Finance verification workflow.
+
+7. Settlement Dashboard
+The React frontend provides a settlement view containing:
+* Employee details
+* Travel Request details
+* Trip information
+* Approval workflow
+* Lodging expenses
+* Transportation expenses
+* Other expenses
+* Reimbursement status
+* Financial summary
+* Travel advance
+* Final payout/recovery amount
+
+8. Expense Settlement Form
+* Used the provided **Excel settlement template**.
+* Automatically populated the settlement information and calculated amounts.
+* Generated the final **Expense Settlement Form** in the output folder.
 
 # What I deliberately left out
 
-I did not add a database, user login/role management, real Finance payment integration, email sending, or integration with an actual HR/ERP system, More hidden edge cases in the Problem. These were kept out because the focus of the assignment was the expense processing and settlement workflow But the process which i made is correct until whatever i made.
+I did not add a database, user login, real Finance payment integration, email sending, or integration with an actual HR/ERP system, gmails api, More hidden edge cases in the Problem. These were kept out because the focus of the assignment was the expense processing and settlement workflow But the process which i made is correct until whatever i made.
 
 # Where it can break
 
-1) The biggest limitation is document quality. If a receipt is missing, unreadable, duplicated in an unclear way, or contains conflicting amounts, the AI may not have enough information to make a safe decision. In such cases, the application marks the claim for Pending Human Review. For production use, I would add stronger validation around AI output, database storage, audit logs, authentication/authorization, and deterministic policy calculations outside the LLM.
-
-2) It can break if some deep changes done in emails or receipts as I used prompt for now so may can break for some cases but for that we can improve prompt that may take some more time in Prompting.
+1. The current application uses the provided documents from the data folder. In a production environment, these documents can be fetched automatically through email, storage, HR, or expense-management APIs.
+2. Local JSON/file storage is used for the assignment. For production, this can be replaced with a database to persist employees, Travel Requests, expenses, approvals, advances, and settlements.
+3. Authentication, role-based access control, Finance payment integration, and HR/ERP integration can be added as part of a production deployment.
+4. The current implementation uses Gemini for understanding and extracting information from unstructured documents. Additional schema validation, monitoring, and audit logging can be added for enterprise-scale deployment.
+5. The core expense extraction, policy application, validation, settlement calculation, advance adjustment, and settlement-form generation required for this assignment are implemented in the current application.
 
 # Instructions
 1) Open root of the project Travel Expense Agent.
@@ -49,6 +113,5 @@ VITE_API_BASE_URL=http://localhost:5000/api
 
 
 # Video Link
-https://drive.google.com/file/d/1SvsbNqvnfDe9TMQEVP1xcaHDil0YVopg/view?usp=sharing
-
+https://drive.google.com/file/d/1365vV3Ae5I5GZZawzA1RTwdBaZl-Bcnu/view?usp=sharing
 

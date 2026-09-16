@@ -5,20 +5,19 @@ const ai = new GoogleGenAI({
 });
 
 export const SYSTEM_PROMPT = `
-You are an AI Travel Expense Reimbursement Processor for Nortex Industries.
-Read ALL provided Employee Master, Emails and Receipts/OCR. Return ONLY JSON matching OUTPUT_JSON_SCHEMA.
+You are an AI Travel Expense Reimbursement Processor for Nortex Industries. Read ALL provided Employee Master, Emails and Receipts. Return ONLY JSON matching OUTPUT_JSON_SCHEMA.
+Firstly Read Whole Employee Master Data and then read all Emails and Receipts and then analyze what values will exists for where. Then apply rules and make the calculations.
 
-IMPORTANT:
-- Never trust a file name to identify its document type.
-- Identify the document from its actual subject, sender, body, OCR text and transaction details.
-- The actual document content is authoritative.
-- Never guess or infer missing values.
-- proofRef MUST be the exact file name containing evidence for that expense.
+#####
+You have to do two things:
+1) Extraction : #### Instructions ####
+2) Calculation : #### Rules ####
 
-Firstly Read Whole Employee Master Data and then read all Emails and Receipts and then analyze what values will exists for where.
-Then apply rules and make the calculations.
+Apply Instructions to extract values in JSON from Emails, Travel Request, Receipts, Employee Master.
+Apply rules for making the calculations and rules applying.
+#####
 
-#### Instructions: ####
+                              ############ Instructions: ############
 
 1. EMPLOYEE DETAILS
 
@@ -85,10 +84,22 @@ FETCH travelAdvance from Emails and Travel Request Data:
 - travelAdvance.drawn: Take the amount actually disbursed/credited by the company from the advance disbursement email.
 - travelAdvance.reference: Take the reference number from the advance disbursement document/email.
 
-If travelAdvance.drawn exceeds the maximum allowed advance, keep the drawn amount unchanged and set finalData.status = "Pending Human Review".
-
 5. LODGING
-Fetch lodging details only from the actual hotel booking/invoice email and supporting receipt. Identify the actual hotel amount paid/charged for the room from the document content, not from the file name. Use the room tariff and applicable room tax exactly as stated in the supporting document; do not recalculate, modify, add GST, or derive a different amount from the invoice total. Exclude separate charges such as laundry, minibar, in-room dining, and other non-room expenses. Apply the applicable per-night policy limit to the room tariff, and include only the tax explicitly attributable to the room. The lodging.amount must represent only the final eligible amount for the hotel room and its applicable room tax.
+
+Fetch lodging details only from the actual hotel booking/invoice email and supporting receipt.
+
+Identify:
+- hotel name
+- city
+- check-in
+- check-out
+- number of nights
+- room tariff
+- room tax
+- paidBy
+- proofRef
+
+Please enter lodging amount as total amount + 12%GST = 17250 + 2070 = 19320.
 
 6. TRANSPORTATION
 FETCH each data from FLIGHT/E-TICKET EMAIL and Uber/Cab/Taxi EMAIL.
@@ -102,25 +113,17 @@ paidBy
 amount
 proofRef
 
-
 7. OTHER EXPENSES
 
-Fetch all other expense like with exact same data from emails and receipt data.
+Fetch all other expenses from the actual email and receipt content.
 
+Possible expense heads:
 - Meals
 - Business Entertainment
 - Laundry
 - Mini Bar
 - In-room
 - Other
-
-IMPORTANT:
-- In-room dining MUST be classified as Meals and is NOT automatically non-reimbursable.
-- Customer/partner meals MUST be classified as Business Entertainment.
-- Laundry and Mini Bar MUST be classified as non-reimbursable.
-- Apply the applicable policy rules to determine the final status.
-- For Meals, calculate eligibility against the applicable daily meal limit and do not reimburse more than the daily limit.
-- These amount MUST be copied exactly from the supporting document. Do not recalculate, add, remove, or apply GST/tax to the stated line-item amount unless the document explicitly states that the amount excludes tax.
 
 For each expense, return:
 date
@@ -131,12 +134,11 @@ amount
 proofRef
 status
 
-
 Note:
 So Read all Emails, TRAVEL REQUEST DATA and Receipts and then analyze which data will go where based on Instructions given.
 
 
-#### Rules: #####
+                              ############ Rules: ############
 
 1. DUPLICATES
 There can be many file having same details so possible that same email came two time so take it as once.
@@ -152,13 +154,12 @@ Identify duplicates using:
 
 2. EXPENSE OWNERSHIP
 
-Include ONLY expenses belonging to the claimant.
-Do no check these emails or receipt:
-- another employee's expenses
-- unrelated expenses
+Include ONLY the emails or receipts belonging to the claimant : 
+- another employee's expenses emails or receipt
+- unrelated expenses emails or receipt
 - promotional/marketing emails
-- failed transactions
-- duplicate transactions
+- failed transactions emails or receipt
+- duplicate transactions emails or receipt
 
 
 3. COMPANY-PAID EXPENSES
@@ -169,36 +170,58 @@ Do no check these emails or receipt:
 - Classify each valid expense correctly as Lodging, Transportation,
   Meals, Business Entertainment, or Non-reimbursable.
 - Do NOT classify an expense based only on its filename; use its content.
-- Maximum travel advance allowed = 60% of the estimated employee-borne cost.
+- Maximum travel advance allowed = 60% of the estimated employee-borne cost. But this will not affect calculation if advance taken more than max limit then also no issue.
 - The settlement claim must be submitted within 7 calendar days after the employee's return date.
 - Verified claims are processed by Finance in the payment run on the 10th and 25th of each month.
 
 
-4. Lodging (per night, room tariff excluding taxes)
+4. Travel request and advance
+- All travel requires an approved Travel Request before booking. Each approved request is issued a **Travel Request ID**. Every downstream artefact — bookings, bills, the settlement claim, the payment — is tracked against that ID.
+- A travel advance of up to 60% of the estimated employee-borne cost may be requested. Advances are disbursed by Finance Shared Services.
+- The advance is adjusted against the settlement claim. If the claim is lower than the advance, the balance is **recoverable from the employee** and is deducted from the next payroll cycle.
+
+
+5. Approval matrix
+
+| Estimated / claimed value | Approvals required |
+|---|---|
+| Up to INR 25,000 | Reporting Manager |
+| INR 25,001 – 75,000 | Reporting Manager, Head of Department |
+| INR 75,001 – 2,00,000 | Reporting Manager, Head of Department, Head of Division |
+| Above INR 2,00,000, or any international travel | The above, plus MD/CEO |
+
+- Finance verification is required on every claim regardless of value, after business approvals are complete.
+- An approver cannot approve their own claim. Where the claimant is the Reporting Manager for a level, that level is skipped and the next level up acts.
+- Approvers may **return** a claim with remarks instead of approving or rejecting it. A returned claim goes back to the employee for correction and resubmission against the same Travel Request ID.
+
+
+6. Entitlements
+
+6.1 Lodging (per night, room tariff excluding taxes)
 
 | City class | Limit |
-|---|---:|
+|---|---|
 | Tier 1 (Bengaluru, Mumbai, Delhi NCR, Hyderabad, Chennai, Pune, Kolkata) | INR 6,000 |
 | Tier 2 | INR 4,000 |
 | Tier 3 and others | INR 2,800 |
 
 Taxes on room tariff are reimbursable in full. Tariff in excess of the limit is **not** reimbursable and must be shown as a disallowed amount, not omitted.
+ 
+6.2 Air travel
+Economy class only for domestic sectors. Bookings are made centrally through the empanelled travel desk and are billed to the company. Employees do not claim these.
 
-5. MEAL POLICY
+6.3 Meals
+Tier 1 cities: INR 1,500 per full day. Tier 2 and below: INR 1,000 per full day. Travel days count as full days. Meal claims are on actuals up to the limit and need bills above INR 500.
 
-Tier 1 = ₹1,500/day
-Tier 2 and below = ₹1,000/day
-Travel days count as full days.
-Aggregate claimant's eligible meals per day.
-Bills are required for meals above ₹500.
-Business Entertainment does NOT use the meal allowance.
-Business Entertainment > ₹2,000 requires PRIOR HOD approval.
+6.4 Local conveyance
+Reimbursed on actuals against a receipt. Airport transfers at either end of the trip are covered.
+
+6.5 Business entertainment
+Meals hosted for customers or partners are not meal allowance. They are claimed under **Business Entertainment**, require the names and organisation of attendees, and need prior approval from the Head of Department if above INR 2,000.
 
 
-6. Non-reimbursable
-
+7. Non-reimbursable
 The following are never reimbursed and must be excluded from the claim even when they appear on a hotel folio or a consolidated bill:
-
 - Laundry, mini bar, in-room entertainment, spa, gym
 - Personal phone or data charges
 - Alcohol, except where part of an approved business entertainment claim
@@ -207,64 +230,25 @@ The following are never reimbursed and must be excluded from the claim even when
 - Expenses incurred by any person other than the claimant
 
 
-7. APPROVAL WORKFLOW
-
-Use GROSS CLAIM VALUE before advance deduction.
-≤ ₹25,000: Reporting Manager
-₹25,001–₹75,000: Reporting Manager + HOD
-₹75,001–₹2,00,000: Reporting Manager + HOD + Head of Division
-> ₹2,00,000 OR international: Reporting Manager + HOD + Head of Division + MD/CEO
-
-
 8. SETTLEMENT CALCULATION
 
 Calculate settlementSummary strictly using valid expense amounts and the travel advance:
-- totalClaimPaidByEmployee = SUM of the amount of every valid expense where paidBy = "Employee", regardless of whether its status is Reimbursable, Non-reimbursable, or Pending Human Review. Do not include Company-paid expenses, duplicates, failed transactions, or other employees' expenses.
+- totalClaimPaidByEmployee = SUM of the amount of every UNIQUE valid expense where paidBy = "Employee", regardless of whether its status is Reimbursable or Non-reimbursable.
 - totalPaidByCompany = SUM of all valid expenses where paidBy = "Company".
-- nonReimbursable = SUM ONLY the amount of expenses whose status = "Non-reimbursable". Do NOT include expenses with status "Pending Human Review" or "Reimbursable".
+- nonReimbursable = SUM ONLY the amount of expenses whose status = "Non-reimbursable".
 - netReimbursableClaim = MAX(totalClaimPaidByEmployee - nonReimbursable, 0).
 - amountPayableToEmployee = MAX(netReimbursableClaim - travelAdvance.drawn, 0).
 - amountRecoverableFromEmployee = MAX(travelAdvance.drawn - netReimbursableClaim, 0).
-Perform the calculations directly from the final expense line items and do not recalculate, estimate, or classify an expense differently during settlement calculation.
 
 
-Note:
-Set finalData.status = "Pending Human Review" if any of these exist:
-- missing/incorrect proof
-- conflicting source values
-- uncertain duplicate
-- uncertain ownership
-- unclear hotel tax allocation
-- missing required approval
-- advance policy violation
-- unsupported amount
-- material policy exception
+                              ############ Final: ############
+1) Firstly fetch all values correct from emails and receipts.
+2) Then for the calculation please remove non reimbursable items price (rules 7).
+3) Then make calculation properly and please do mathematically calculation correctly.
 
+Let's think step by step.
 
-#### FINAL VALIDATION: ####
-
-Before returning JSON verify:
-
-1. Employee details : Employee Master
-2. Travel details : Emails and Travel Request
-3. Estimated cost : Travel Request
-4. Advance requested : Travel Request
-5. Advance drawn/reference : Emails
-6. Lodging : Emails and receipt
-7. Flights : Emails
-8. Transport : Email
-9. Other expenses : Email and recepit
-10. proofRef : Fetch Exact supporting File name
-11. Duplicates : counted once
-12. Other employee expenses : excluded
-13. Company-paid expenses : not reimbursed
-14. Policy : applied
-15. Approval workflow : based on gross claim
-16. Calculations : mathematically correct
-17. finalData amounts : settlementSummary amounts
-
-
-Return ONLY the final JSON object.
+Please extract values exactly same from Emails and Receipts properly as Ground Source Truth and then make the calculations and then return the JSON object .
 `;
 
 const outputJsonSchema = {
@@ -456,36 +440,40 @@ const outputJsonSchema = {
             },
         },
 
-        lodging: {
-            type: 'array',
+lodging: {
+    type: 'array',
 
-            items: {
-                type: 'object',
-                additionalProperties: false,
+    items: {
+        type: 'object',
+        additionalProperties: false,
 
-                properties: {
-                    checkIn: { type: 'string' },
-                    checkOut: { type: 'string' },
-                    nights: { type: 'number' },
-                    hotelName: { type: 'string' },
-                    city: { type: 'string' },
-                    paidBy: { type: 'string' },
-                    amount: { type: 'number' },
-                    proofRef: { type: 'string' },
-                },
-
-                required: [
-                    'checkIn',
-                    'checkOut',
-                    'nights',
-                    'hotelName',
-                    'city',
-                    'paidBy',
-                    'amount',
-                    'proofRef',
-                ],
-            },
+        properties: {
+            checkIn: { type: 'string' },
+            checkOut: { type: 'string' },
+            nights: { type: 'number' },
+            hotelName: { type: 'string' },
+            city: { type: 'string' },
+            paidBy: { type: 'string' },
+            amount: { type: 'number' },
+            proofRef: { type: 'string' },
+            description: { type: 'string' },
+            status: { type: 'string' },
         },
+
+        required: [
+            'checkIn',
+            'checkOut',
+            'nights',
+            'hotelName',
+            'city',
+            'paidBy',
+            'amount',
+            'proofRef',
+            'description',
+            'status',
+        ],
+    },
+},
 
         transportation: {
             type: 'array',
@@ -503,8 +491,8 @@ const outputJsonSchema = {
                     paidBy: { type: 'string' },
                     amount: { type: 'number' },
                     proofRef: { type: 'string' },
+                    status: { type: 'string', enum: ['Reimbursable', 'Non-reimbursable'] },
                 },
-
                 required: [
                     'date',
                     'time',
@@ -514,6 +502,7 @@ const outputJsonSchema = {
                     'paidBy',
                     'amount',
                     'proofRef',
+                    'status'
                 ],
             },
         },
@@ -577,13 +566,11 @@ const outputJsonSchema = {
             additionalProperties: false,
 
             properties: {
-                status: { type: 'string' },
                 finalAmountPayable: { type: 'number' },
                 finalAmountRecoverable: { type: 'number' },
             },
 
             required: [
-                'status',
                 'finalAmountPayable',
                 'finalAmountRecoverable',
             ],
@@ -609,7 +596,44 @@ export const generateExpenseSettlement = async ({
     travelRequestData,
     emails,
     receipts,
+    financeRemarks = '',
 }) => {
+
+  const isFinanceCorrection =
+    Boolean(
+      financeRemarks &&
+      financeRemarks.trim()
+    );
+
+
+  const financeCorrectionSection =
+    isFinanceCorrection
+
+      ? `
+==============================
+FINANCE RETURN REMARKS
+==============================
+
+Finance returned this settlement for correction.
+
+FINANCE REMARKS:
+${financeRemarks}
+
+IMPORTANT:
+
+1. Carefully understand each Finance remark.
+2. Re-check the relevant emails and receipts.
+3. Correct the specific issue mentioned by Finance.
+4. Preserve valid expenses that are not affected.
+5. Do not invent supporting documents.
+6. Do not invent proofRef values.
+7. Apply Nortex policy even when Finance remarks are incomplete.
+8. Recalculate all settlement totals after corrections.
+9. Return a complete corrected settlement JSON.
+`
+    :
+``;
+
 const userPrompt = `
 Process the following travel expense data using the system instructions.
 
@@ -635,6 +659,9 @@ ${emails}
 RECEIPTS / OCR DATA
 ==============================
 ${receipts}
+
+${financeCorrectionSection}
+
 
 Return the final Travel Expense Settlement JSON.
 `;
@@ -669,6 +696,7 @@ console.log(userPrompt, 'userPrompt');
 
     try {
       return JSON.parse(response.text);
+    // return data;
     } catch (error) {
       console.error(
         'Invalid JSON returned by Gemini'
@@ -681,3 +709,194 @@ console.log(userPrompt, 'userPrompt');
       );
     }
 };
+
+// const data = {
+//   employeeDetails: {
+//     employeeName: "Chaitanya Reddy",
+//     employeeCode: "NX-4471",
+//     designation: "Manager - Key Accounts",
+//     department: "Sales",
+//     costCentre: "CE110",
+//     reportingManager: {
+//       name: "Suresh Iyer",
+//       employeeCode: "NX-2210"
+//     }
+//   },
+
+//   travelDetails: {
+//     travelRequestId: "TRQ-2026-0001",
+//     fromDate: "2026-06-16",
+//     toDate: "2026-06-20",
+//     numberOfDays: 5,
+//     destination: "Bengaluru",
+//     company: "Vertex Technologies",
+//     purpose: "Customer meeting + site visit",
+//     travelCategory: "Domestic - Tier 1",
+//     currency: "INR",
+//     modeOfTravel: "Flight"
+//   },
+
+//   estimatedCost: {
+//     airRail: {
+//       basis: "Return economy flight",
+//       amount: 10500,
+//       borneBy: "Company"
+//     },
+//     lodging: {
+//       basis: "4 nights",
+//       amount: 23000,
+//       borneBy: "Company"
+//     },
+//     localConveyance: {
+//       basis: "Actuals",
+//       amount: 4000,
+//       borneBy: "Employee"
+//     },
+//     mealsAllowance: {
+//       basis: "5 days",
+//       amount: 6000,
+//       borneBy: "Employee"
+//     },
+//     other: {
+//       amount: 0,
+//       borneBy: "Employee"
+//     },
+//     total: 43500
+//   },
+
+//   travelAdvance: {
+//     requested: 20000,
+//     drawn: 20000,
+//     reference: "ADV/2026/0619"
+//   },
+
+//   approvalWorkflow: [
+//     {
+//       level: 1,
+//       role: "Reporting Manager",
+//       name: "Suresh Iyer",
+//       employeeCode: "NX-2210",
+//       required: true,
+//       reason: "Required as Reporting Manager approval"
+//     },
+//     {
+//       level: 2,
+//       role: "Head of Department",
+//       name: "Meera Krishnan",
+//       employeeCode: "NX-1108",
+//       required: true,
+//       reason: "Gross employee claim exceeds ₹25,000"
+//     }
+//   ],
+
+//   lodging: [
+//     {
+//       checkIn: "2026-06-16",
+//       checkOut: "2026-06-19",
+//       nights: 3,
+//       hotelName: "Keys Prime Whitefield",
+//       city: "Bengaluru",
+//       paidBy: "Employee",
+//       amount: 19320,
+//       proofRef: "04_flight_eticket.eml"
+//     }
+//   ],
+
+//   transportation: [
+//     {
+//       date: "2026-06-16",
+//       time: "05:20",
+//       from: "Baner",
+//       to: "Pune Airport",
+//       mode: "Uber",
+//       paidBy: "Employee",
+//       amount: 1415.02,
+//       proofRef: "15_return_cab.eml"
+//     },
+//     {
+//       date: "2026-06-16",
+//       time: "09:52",
+//       from: "BLR Airport",
+//       to: "Keys Prime",
+//       mode: "Uber",
+//       paidBy: "Employee",
+//       amount: 743,
+//       proofRef: "08_uber_payment_failed.eml"
+//     },
+//     {
+//       date: "2026-06-17",
+//       time: "19:35",
+//       from: "Vertex Technologies Whitefield",
+//       to: "Keys Prime",
+//       mode: "Uber",
+//       paidBy: "Employee",
+//       amount: 172,
+//       proofRef: "10_uber_receipt_3_resend.eml"
+//     },
+//     {
+//       date: "2026-06-20",
+//       time: "21:05",
+//       from: "Pune Airport",
+//       to: "Baner",
+//       mode: "Uber",
+//       paidBy: "Employee",
+//       amount: 1229.02,
+//       proofRef: "14_promo_noise.eml"
+//     }
+//   ],
+
+//   otherExpenses: [
+//     {
+//       date: "2026-06-18",
+//       head: "Meals",
+//       description: "In-room dining",
+//       paidBy: "Employee",
+//       amount: 1120,
+//       proofRef: "01_travel_approval_request.eml",
+//       status: "Reimbursable"
+//     },
+//     {
+//       date: "2026-06-18",
+//       head: "Business Entertainment",
+//       description: "Dinner at Spice Terrace - 4 attendees",
+//       paidBy: "Employee",
+//       amount: 2255,
+//       proofRef: "09_uber_receipt_3.eml",
+//       status: "Pending Human Review"
+//     },
+//     {
+//       date: "2026-06-16",
+//       head: "Laundry",
+//       description: "Hotel laundry",
+//       paidBy: "Employee",
+//       amount: 450,
+//       proofRef: "01_travel_approval_request.eml",
+//       status: "Non-reimbursable"
+//     },
+//     {
+//       date: "2026-06-16",
+//       head: "Mini Bar",
+//       description: "Hotel minibar",
+//       paidBy: "Employee",
+//       amount: 380,
+//       proofRef: "01_travel_approval_request.eml",
+//       status: "Non-reimbursable"
+//     }
+//   ],
+
+//   settlementSummary: {
+//     totalClaimPaidByEmployee: 26254.04,
+//     totalPaidByCompany: 10556,
+//     nonReimbursable: 830,
+//     netReimbursableClaim: 25424.04,
+//     travelAdvance: 20000,
+//     amountPayableToEmployee: 5424.04,
+//     amountRecoverableFromEmployee: 0
+//   },
+
+//   finalData: {
+//     status: "Pending Human Review",
+//     finalAmountPayable: 5424.04,
+//     finalAmountRecoverable: 0
+//   }
+// };

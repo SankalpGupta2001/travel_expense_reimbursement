@@ -9,63 +9,129 @@ const initializeWorker = async () => {
     return worker;
   }
 
-  console.log('Initializing OCR worker...');
+  console.log(
+    'Initializing OCR worker...'
+  );
 
-  worker = await createWorker('eng');
+  worker =
+    await createWorker('eng');
 
-  console.log('OCR worker initialized');
+  console.log(
+    'OCR worker initialized'
+  );
 
   return worker;
 };
 
-export const extractTextFromImage = async (imagePath) => {
-  try {
-    const ocrWorker = await initializeWorker();
+export const extractTextFromImage =
+  async (imagePath) => {
+    try {
+      const ocrWorker =
+        await initializeWorker();
 
-    const imageBuffer = await fs.readFile(imagePath);
+      const imageBuffer =
+        await fs.readFile(
+          imagePath
+        );
 
-    const result = await ocrWorker.recognize(imageBuffer);
+      const result =
+        await ocrWorker.recognize(
+          imageBuffer
+        );
 
-    return {
-      fileName: path.basename(imagePath),
-      text: result.data.text,
-    };
-  } catch (error) {
-    console.error(`OCR failed for ${imagePath}`);
-    console.error(error);
+      return {
+        fileName:
+          path.basename(imagePath),
 
-    throw error;
-  }
-};
+        text:
+          result.data.text,
+      };
+    } catch (error) {
+      console.error(
+        `OCR failed for ${imagePath}`
+      );
 
-export const extractAllImages = async (directoryPath) => {
-  const files = await fs.readdir(directoryPath);
+      console.error(error);
 
-  const imageFiles = files
-    .filter((file) => {
-      const extension = path.extname(file).toLowerCase();
+      throw error;
+    }
+  };
 
-      return ['.png', '.jpg', '.jpeg'].includes(extension);
-    })
-    .sort();
+export const extractAllImages =
+  async (directoryPath) => {
+    const files =
+      await fs.readdir(
+        directoryPath
+      );
 
-  const results = [];
+    const imageFiles =
+      files
+        .filter((file) => {
+          const extension =
+            path.extname(file)
+              .toLowerCase();
 
-  for (const file of imageFiles) {
-    const filePath = path.join(directoryPath, file);
+          return [
+            '.png',
+            '.jpg',
+            '.jpeg',
+          ].includes(
+            extension
+          );
+        })
+        .sort();
 
-    const result = await extractTextFromImage(filePath);
+    const results = [];
 
-    results.push(result);
-  }
+    for (
+      const file of imageFiles
+    ) {
+      const filePath =
+        path.join(
+          directoryPath,
+          file
+        );
 
-  return results;
-};
+      const result =
+        await extractTextFromImage(
+          filePath
+        );
 
-export const formatImagesForAI = (images) => {
-  return images
-    .map(
-      (image, index) => `
+      results.push(result);
+    }
+
+    return results;
+  };
+
+export const extractUploadedImages =
+  async (files = []) => {
+    const results = [];
+
+    for (
+      const file of files
+    ) {
+      const result =
+        await extractTextFromImage(
+          file.path
+        );
+
+      results.push({
+        fileName:
+          file.originalname,
+
+        text:
+          result.text,
+      });
+    }
+
+    return results;
+  };
+
+export const formatImagesForAI =
+  (images) => {
+    return images
+      .map(
+        (image, index) => `
 ============================================================
 RECEIPT / OCR ${index + 1}
 ============================================================
@@ -76,15 +142,19 @@ ${image.fileName}
 OCR TEXT:
 ${image.text}
 `
-    )
-    .join('\n');
-};
+      )
+      .join('\n');
+  };
 
-export const closeImageWorker = async () => {
-  if (worker) {
-    await worker.terminate();
-    worker = null;
+export const closeImageWorker =
+  async () => {
+    if (worker) {
+      await worker.terminate();
 
-    console.log('OCR worker terminated');
-  }
-};
+      worker = null;
+
+      console.log(
+        'OCR worker terminated'
+      );
+    }
+  };

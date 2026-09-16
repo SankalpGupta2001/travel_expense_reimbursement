@@ -23,7 +23,6 @@ export const extractCsvData = async (filePath) => {
   });
 };
 
-
 export const formatCsvForAI = (csvResult) => {
   return `
 FILE NAME:
@@ -33,4 +32,34 @@ EMPLOYEE RECORDS:
 
 ${JSON.stringify(csvResult.data, null, 2)}
 `;
+};
+
+export const findEmployeeByCode = async (
+  filePath,
+  employeeCode
+) => {
+  const result = await extractCsvData(filePath);
+
+  const employee = result.data.find(
+    (item) =>
+      String(item.emp_code).trim() ===
+      String(employeeCode).trim()
+  );
+
+  return employee || null;
+};
+
+export const findEmployeeByEmail = async (
+  filePath,
+  email
+) => {
+  const result = await extractCsvData(filePath);
+
+  const employee = result.data.find(
+    (item) =>
+      String(item.email).toLowerCase().trim() ===
+      String(email).toLowerCase().trim()
+  );
+
+  return employee || null;
 };
