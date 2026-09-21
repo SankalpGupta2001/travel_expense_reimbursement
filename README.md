@@ -100,7 +100,7 @@ AI_TRAVEL_EXPENSE_PORT=5000
 GEMINI_API_KEY=gemini api key
 GEMINI_MODEL=gemini-2.5-flash
 ```
-4) Then run npm run dev to run the backend. In http://localhost:5000 backend will run.
+4) Then run npm run dev or node index.js to run the backend. In http://localhost:5000 backend will run.
 5) Then do the cd frontend
 6) Then run npm install to install all dependencies.
 7) Then create .env file in frontend folder and put these values.
